@@ -1,98 +1,97 @@
 import { Product, Category, Order } from './types';
 
 export const CATEGORIES: Category[] = [
-  { id: '1', name: 'Cadeiras', image: 'https://picsum.photos/seed/chair/100/100' },
-  { id: '2', name: 'Mesas', image: 'https://picsum.photos/seed/table/100/100' },
-  { id: '3', name: 'Sofás', image: 'https://picsum.photos/seed/sofa/100/100' },
-  { id: '4', name: 'Decoração', image: 'https://picsum.photos/seed/decor/100/100' },
-  { id: '5', name: 'Iluminação', image: 'https://picsum.photos/seed/lamp/100/100' },
+  { id: '1', name: 'Iluminação', image: 'https://picsum.photos/seed/ledlamp/100/100' },
+  { id: '2', name: 'Fios e Cabos', image: 'https://picsum.photos/seed/wires/100/100' },
+  { id: '3', name: 'Tomadas', image: 'https://picsum.photos/seed/switch/100/100' },
+  { id: '4', name: 'Ferramentas', image: 'https://picsum.photos/seed/tools/100/100' },
+  { id: '5', name: 'Chuveiros', image: 'https://picsum.photos/seed/shower/100/100' },
 ];
 
 export const PRODUCTS: Product[] = [
   {
     id: '101',
-    name: 'Cadeira Eames Wood',
-    price: 249.90,
-    oldPrice: 329.00,
-    category: 'Cadeiras',
-    image: 'https://picsum.photos/seed/eames/400/400',
-    description: 'Design clássico de Charles e Ray Eames. Assento em polipropileno e base em madeira maciça.',
-    rating: 4.8
-  },
-  {
-    id: '102',
-    name: 'Mesa de Jantar Industrial',
-    price: 1290.00,
-    category: 'Mesas',
-    image: 'https://picsum.photos/seed/tablewood/400/400',
-    description: 'Mesa com tampo de madeira maciça e pés de ferro estilo industrial. Perfeita para 6 lugares.',
+    name: 'Kit 10 Lâmpadas LED Bulbo 9W Branco Frio',
+    price: 89.90,
+    oldPrice: 120.00,
+    category: 'Iluminação',
+    image: 'https://picsum.photos/seed/ledbulb/400/400',
+    description: 'Alta eficiência energética e durabilidade. Ideal para ambientes residenciais e comerciais.',
     rating: 4.9
   },
   {
+    id: '102',
+    name: 'Cabo Flexível 2.5mm Rolo 100m Sil',
+    price: 249.90,
+    category: 'Fios e Cabos',
+    image: 'https://picsum.photos/seed/cable/400/400',
+    description: 'Cabo de cobre com isolamento em PVC, antichama. Certificado pelo INMETRO.',
+    rating: 5.0
+  },
+  {
     id: '103',
-    name: 'Sofá Retrátil 3 Lugares',
-    price: 2599.00,
-    oldPrice: 3100.00,
-    category: 'Sofás',
-    image: 'https://picsum.photos/seed/sofa1/400/400',
-    description: 'Conforto absoluto com assento retrátil e encosto reclinável. Tecido Suede aveludado.',
-    rating: 4.7
+    name: 'Chuveiro Lorenzetti Acqua Ultra',
+    price: 389.90,
+    oldPrice: 450.00,
+    category: 'Chuveiros',
+    image: 'https://picsum.photos/seed/shower/400/400',
+    description: 'Design ultra fino e moderno. Tecnologia Press Plus para jatos de alta performance.',
+    rating: 4.8
   },
   {
     id: '104',
-    name: 'Luminária Pendente Cobre',
-    price: 189.90,
-    category: 'Iluminação',
-    image: 'https://picsum.photos/seed/lamp1/400/400',
-    description: 'Acabamento em cobre moderno, ideal para bancadas e mesas de jantar.',
-    rating: 4.5
+    name: 'Furadeira de Impacto 600W',
+    price: 299.90,
+    category: 'Ferramentas',
+    image: 'https://picsum.photos/seed/drill/400/400',
+    description: 'Potência e robustez para perfurações em concreto, aço e madeira. Acompanha maleta.',
+    rating: 4.7
   },
   {
     id: '105',
-    name: 'Vaso Cerâmica Nórdico',
-    price: 89.90,
-    category: 'Decoração',
-    image: 'https://picsum.photos/seed/vase/400/400',
-    description: 'Design minimalista nórdico. Perfeito para plantas secas ou naturais.',
+    name: 'Pendente Industrial Preto Fosco',
+    price: 159.90,
+    category: 'Iluminação',
+    image: 'https://picsum.photos/seed/pendant/400/400',
+    description: 'Estilo industrial moderno, ideal para bancadas e mesas de jantar.',
     rating: 4.6
   },
    {
     id: '106',
-    name: 'Poltrona Charles Eames',
-    price: 4599.90,
-    oldPrice: 5200.00,
-    category: 'Cadeiras',
-    image: 'https://picsum.photos/seed/armchair/400/400',
-    description: 'A clássica poltrona com puff. Couro ecológico e madeira multilaminada.',
-    rating: 5.0
+    name: 'Conjunto Tomada 20A + Interruptor',
+    price: 25.90,
+    category: 'Tomadas',
+    image: 'https://picsum.photos/seed/socket/400/400',
+    description: 'Design clean e acabamento brilhante. Fácil instalação e alta durabilidade.',
+    rating: 4.8
   }
 ];
 
 export const BANNERS = [
-  { id: 1, image: 'https://picsum.photos/seed/livingroom/800/400', title: 'Renove sua Sala', subtitle: 'Até 40% OFF' },
-  { id: 2, image: 'https://picsum.photos/seed/kitchen/800/400', title: 'Cozinha Gourmet', subtitle: 'Lançamentos' },
+  { id: 1, image: 'https://picsum.photos/seed/lightingstore/800/400', title: 'Iluminação LED', subtitle: 'Economia e Design' },
+  { id: 2, image: 'https://picsum.photos/seed/electrician/800/400', title: 'Ofertas Elétricas', subtitle: 'Fios e Cabos' },
 ];
 
 export const MOCK_ORDERS: Order[] = [
   {
-    id: '#LI-10293',
+    id: '#LI-55021',
     date: '12/10/2023',
     status: 'delivered',
-    total: 399.80,
-    items: [PRODUCTS[0], PRODUCTS[3]] as any
+    total: 339.80,
+    items: [PRODUCTS[0], PRODUCTS[1]] as any
   },
   {
-    id: '#LI-10344',
+    id: '#LI-55102',
     date: '05/11/2023',
     status: 'shipping',
-    total: 2599.00,
+    total: 389.90,
     items: [PRODUCTS[2]] as any
   },
   {
-    id: '#LI-10401',
+    id: '#LI-55230',
     date: '10/11/2023',
     status: 'pending',
-    total: 89.90,
-    items: [PRODUCTS[4]] as any
+    total: 25.90,
+    items: [PRODUCTS[5]] as any
   }
 ];
