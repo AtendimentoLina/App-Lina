@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Lina Materiais Elétricos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -38,6 +38,21 @@
       body {
         -webkit-tap-highlight-color: transparent;
       }
+      /* Animations */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+      @keyframes slideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .animate-slide-in {
+        animation: slideIn 0.3s ease-out;
+      }
     </style>
   <script type="importmap">
 {
@@ -50,7 +65,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-50 text-gray-900 antialiased select-none">
+  <body class="bg-white text-gray-900 antialiased select-none">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
   </body>

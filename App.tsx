@@ -21,26 +21,21 @@ import {
   ArrowRight,
   Mail,
   Lock,
-  CheckCircle,
+  MapPin,
   Truck,
   Filter,
   X,
   SlidersHorizontal,
-  ArrowUpDown,
-  RefreshCw
+  Info,
+  ExternalLink,
+  CheckCircle
 } from 'lucide-react';
 import { PRODUCTS as MOCK_PRODUCTS, CATEGORIES as MOCK_CATEGORIES, BANNERS, MOCK_ORDERS } from './constants';
 import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
 
 // --- Configuration ---
-// Pointing directly to the Vercel production API as requested.
-// This allows the app to fetch real data even when running locally or on a device.
 const API_BASE_URL = 'https://app-lina.vercel.app/api'; 
-
-// Set this to TRUE to test the UI without breaking before you deploy the API
-// Set to FALSE to start using real data. 
-// If the API fails (e.g. missing Key), it will automatically fallback to mock data.
-const USE_MOCK_DATA = false; 
+const USE_MOCK_DATA = false; // Set to FALSE to use real integration
 
 // --- Shared Components ---
 
@@ -57,7 +52,7 @@ const Button: React.FC<{
   const variants = {
     primary: "bg-primary text-white shadow-lg shadow-primary/20",
     secondary: "bg-secondary text-white shadow-lg shadow-secondary/20",
-    outline: "border-2 border-gray-200 text-gray-700 hover:bg-gray-50",
+    outline: "border-2 border-gray-100 text-gray-700 hover:bg-gray-50",
     danger: "bg-red-50 text-red-500 hover:bg-red-100",
     ghost: "bg-transparent text-gray-600 hover:bg-gray-50"
   };
@@ -75,7 +70,7 @@ const Button: React.FC<{
 };
 
 const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
+  <div className={`animate-pulse bg-gray-100 rounded-xl ${className}`} />
 );
 
 const FlyingIcon: React.FC<{ start: {x: number, y: number}, onEnd: () => void }> = ({ start, onEnd }) => {
@@ -90,12 +85,11 @@ const FlyingIcon: React.FC<{ start: {x: number, y: number}, onEnd: () => void }>
   });
 
   useEffect(() => {
-    // Trigger animation next frame
     requestAnimationFrame(() => {
       setStyle(prev => ({
         ...prev,
-        top: window.innerHeight - 50, // Approx Nav bar location
-        left: window.innerWidth * 0.65, // Approx Cart icon location (3rd tab)
+        top: window.innerHeight - 50, 
+        left: window.innerWidth * 0.65, 
         opacity: 0,
         transform: 'scale(0.5)'
       }));
@@ -136,8 +130,6 @@ const ProductCard: React.FC<{
   const handleQtyClick = (e: React.MouseEvent, delta: number) => {
     e.stopPropagation();
     onUpdateQty(product, delta);
-    
-    // Trigger flying animation if adding first item
     if (delta > 0 && cartQty === 0 && onAddToCartAnimated) {
       onAddToCartAnimated(e.clientX, e.clientY);
     }
@@ -151,11 +143,11 @@ const ProductCard: React.FC<{
   return (
     <div 
       onClick={onClick}
-      className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 active:scale-[0.99] transition-all duration-300 relative group hover:scale-[1.02] hover:shadow-xl z-0"
+      className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm active:scale-[0.99] transition-all duration-300 relative group hover:shadow-md z-0"
     >
       <button 
         onClick={handleWishlistClick}
-        className="absolute top-3 right-3 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white"
+        className="absolute top-3 right-3 z-10 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-gray-50 border border-gray-100"
       >
         <Heart 
           className={`w-4 h-4 transition-all duration-300 ${isWishlisted ? 'text-primary fill-primary' : 'text-gray-400'} ${animatingHeart ? 'scale-150' : 'scale-100'}`} 
@@ -163,9 +155,9 @@ const ProductCard: React.FC<{
       </button>
 
       <div className="relative aspect-square mb-3 rounded-xl overflow-hidden bg-gray-50">
-        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+        <img src={product.image} alt={product.name} className="w-full h-full object-cover mix-blend-multiply" />
         {product.oldPrice && (
-          <span className="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full">
+          <span className="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
             OFERTA
           </span>
         )}
@@ -180,25 +172,24 @@ const ProductCard: React.FC<{
           {product.oldPrice && (
             <p className="text-xs text-gray-400 line-through">R$ {product.oldPrice.toFixed(2)}</p>
           )}
-          <p className="text-primary font-bold">R$ {product.price.toFixed(2)}</p>
+          <p className="text-primary font-bold text-lg">R$ {product.price.toFixed(2)}</p>
         </div>
 
         {cartQty > 0 ? (
-          <div className="flex items-center justify-between bg-gray-50 rounded-lg border border-gray-200 h-8 w-full mt-1" onClick={e => e.stopPropagation()}>
-             <button onClick={(e) => handleQtyClick(e, -1)} className="w-8 h-full flex items-center justify-center text-gray-600 active:bg-gray-200 rounded-l-lg hover:text-red-500">
-               {cartQty === 1 ? <Trash2 className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+          <div className="flex items-center justify-between bg-gray-50 rounded-lg border border-gray-200 h-9 w-full mt-1" onClick={e => e.stopPropagation()}>
+             <button onClick={(e) => handleQtyClick(e, -1)} className="w-9 h-full flex items-center justify-center text-gray-600 active:bg-gray-200 rounded-l-lg hover:text-red-500">
+               {cartQty === 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
              </button>
-             <span className="flex-1 text-center text-xs font-bold text-gray-900">{cartQty}</span>
-             <button onClick={(e) => handleQtyClick(e, 1)} className="w-8 h-full flex items-center justify-center text-gray-600 active:bg-gray-200 rounded-r-lg">
-               <Plus className="w-3 h-3" />
+             <span className="flex-1 text-center text-sm font-bold text-gray-900">{cartQty}</span>
+             <button onClick={(e) => handleQtyClick(e, 1)} className="w-9 h-full flex items-center justify-center text-gray-600 active:bg-gray-200 rounded-r-lg">
+               <Plus className="w-4 h-4" />
              </button>
           </div>
         ) : (
           <button 
             onClick={(e) => handleQtyClick(e, 1)}
-            className="w-full h-8 mt-1 bg-primary text-white text-xs font-semibold rounded-lg shadow-sm active:bg-secondary flex items-center justify-center gap-1 hover:bg-red-700 transition-colors"
+            className="w-full h-9 mt-1 bg-primary text-white text-sm font-semibold rounded-lg shadow-sm active:bg-red-700 flex items-center justify-center gap-1 hover:bg-red-600 transition-colors"
           >
-            <Plus className="w-3 h-3" />
             Adicionar
           </button>
         )}
@@ -212,21 +203,21 @@ const ProductCardSkeleton = () => (
     <Skeleton className="aspect-square w-full rounded-xl mb-3" />
     <Skeleton className="h-4 w-full mb-1" />
     <Skeleton className="h-4 w-2/3 mb-2" />
-    <Skeleton className="h-5 w-1/3 mb-2" />
-    <Skeleton className="h-8 w-full rounded-lg" />
+    <Skeleton className="h-6 w-1/3 mb-2" />
+    <Skeleton className="h-9 w-full rounded-lg" />
   </div>
 );
 
 // --- SCREENS ---
 
 const SplashScreen: React.FC = () => (
-  <div className="h-full w-full bg-primary flex flex-col items-center justify-center animate-fade-in z-50">
-    <div className="w-24 h-24 border-4 border-white rounded-full flex items-center justify-center mb-6">
-      <span className="text-4xl font-bold text-white tracking-tighter">L</span>
-    </div>
-    <h1 className="text-3xl font-bold text-white tracking-widest">LINA</h1>
-    <p className="text-white/80 text-xs tracking-[0.2em] mt-1 uppercase">Materiais Elétricos</p>
-    <div className="mt-8 animate-spin w-6 h-6 border-2 border-white/20 border-t-white rounded-full"></div>
+  <div className="h-full w-full bg-white flex flex-col items-center justify-center animate-fade-in z-50 absolute inset-0">
+     <div className="mb-10 p-4">
+        {/* Usando logo.png com fundo branco conforme solicitado */}
+        <img src="logo.png" alt="LINA" className="w-56 object-contain" />
+     </div>
+     <div className="animate-spin w-8 h-8 border-2 border-gray-100 border-t-[#d6001c] rounded-full"></div>
+     <div className="absolute bottom-10 text-gray-400 text-xs font-medium">Carregando Loja...</div>
   </div>
 );
 
@@ -242,16 +233,16 @@ const OnboardingScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
     <div className="h-full flex flex-col bg-white">
       <div className="flex-1 relative">
         <img src={steps[step].image} alt="Onboarding" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-           <h2 className="text-3xl font-bold mb-4">{steps[step].title}</h2>
-           <p className="text-gray-200 text-lg leading-relaxed">{steps[step].desc}</p>
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 text-gray-900">
+           <h2 className="text-3xl font-bold mb-4 text-primary">{steps[step].title}</h2>
+           <p className="text-gray-600 text-lg leading-relaxed">{steps[step].desc}</p>
         </div>
       </div>
       <div className="p-6 flex items-center justify-between bg-white">
         <div className="flex gap-2">
           {steps.map((_, i) => (
-            <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-primary' : 'w-2 bg-gray-300'}`} />
+            <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-primary' : 'w-2 bg-gray-200'}`} />
           ))}
         </div>
         <button 
@@ -267,20 +258,21 @@ const OnboardingScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
 
 const LoginScreen: React.FC<{ onLogin: () => void, onRegister: () => void, onSkip: () => void }> = ({ onLogin, onRegister, onSkip }) => {
   return (
-    <div className="h-full flex flex-col p-6 bg-white justify-center animate-fade-in">
-       <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-secondary mb-2">Bem-vindo de volta!</h1>
-          <p className="text-gray-500">Faça login para acessar seus pedidos e orçamentos.</p>
+    <div className="h-full flex flex-col p-8 bg-white justify-center animate-fade-in">
+       <div className="mb-8 text-center">
+          <img src="logo.png" alt="LINA" className="h-12 mx-auto mb-6" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Bem-vindo(a)!</h1>
+          <p className="text-gray-500">Acesse sua conta para ver pedidos e ofertas exclusivas.</p>
        </div>
 
        <form onSubmit={(e) => { e.preventDefault(); onLogin(); }} className="space-y-4">
           <div className="bg-gray-50 rounded-xl px-4 py-3 flex items-center border border-gray-100 focus-within:border-primary transition-colors">
             <Mail className="w-5 h-5 text-gray-400 mr-3" />
-            <input type="email" placeholder="Seu e-mail" className="bg-transparent w-full outline-none" required />
+            <input type="email" placeholder="E-mail" className="bg-transparent w-full outline-none text-gray-900" required />
           </div>
           <div className="bg-gray-50 rounded-xl px-4 py-3 flex items-center border border-gray-100 focus-within:border-primary transition-colors">
             <Lock className="w-5 h-5 text-gray-400 mr-3" />
-            <input type="password" placeholder="Sua senha" className="bg-transparent w-full outline-none" required />
+            <input type="password" placeholder="Senha" className="bg-transparent w-full outline-none text-gray-900" required />
           </div>
           <div className="flex justify-end">
             <button type="button" className="text-sm text-primary font-semibold">Esqueceu a senha?</button>
@@ -289,21 +281,21 @@ const LoginScreen: React.FC<{ onLogin: () => void, onRegister: () => void, onSki
        </form>
 
        <div className="my-8 flex items-center gap-4">
-          <div className="h-px bg-gray-200 flex-1" />
-          <span className="text-gray-400 text-sm">ou entre com</span>
-          <div className="h-px bg-gray-200 flex-1" />
+          <div className="h-px bg-gray-100 flex-1" />
+          <span className="text-gray-400 text-sm">ou</span>
+          <div className="h-px bg-gray-100 flex-1" />
        </div>
 
        <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="text-sm"><span className="mr-2">G</span> Google</Button>
-          <Button variant="outline" className="text-sm"><span className="mr-2"></span> Apple</Button>
+          <Button variant="outline" className="text-sm border-gray-200"><span className="mr-2">G</span> Google</Button>
+          <Button variant="outline" className="text-sm border-gray-200"><span className="mr-2"></span> Apple</Button>
        </div>
 
        <div className="mt-auto pt-6 text-center space-y-4">
           <p className="text-gray-600">
-            Não tem uma conta? <button onClick={onRegister} className="text-primary font-bold">Cadastre-se</button>
+            Ainda não tem conta? <button onClick={onRegister} className="text-primary font-bold">Cadastrar</button>
           </p>
-          <button onClick={onSkip} className="text-gray-400 text-sm underline">Continuar como visitante</button>
+          <button onClick={onSkip} className="text-gray-400 text-sm hover:text-gray-600">Continuar sem login</button>
        </div>
     </div>
   )
@@ -311,9 +303,9 @@ const LoginScreen: React.FC<{ onLogin: () => void, onRegister: () => void, onSki
 
 const OrdersScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
-    <div className="h-full flex flex-col bg-gray-50 animate-slide-in">
+    <div className="h-full flex flex-col bg-white animate-slide-in">
        <div className="bg-white p-4 flex items-center gap-4 border-b border-gray-100 sticky top-0 z-10">
-         <button onClick={onBack} className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft className="w-6 h-6" /></button>
+         <button onClick={onBack} className="p-2 rounded-full hover:bg-gray-50 border border-gray-100"><ChevronLeft className="w-6 h-6" /></button>
          <h1 className="font-bold text-lg">Meus Pedidos</h1>
        </div>
        <div className="p-4 space-y-4 overflow-y-auto pb-24">
@@ -321,31 +313,32 @@ const OrdersScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
              <div key={order.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex justify-between items-start mb-3">
                    <div>
-                      <span className="font-bold text-gray-900 block">{order.id}</span>
+                      <span className="font-bold text-gray-900 block text-lg">{order.id}</span>
                       <span className="text-xs text-gray-500">{order.date}</span>
                    </div>
-                   <div className={`px-3 py-1 rounded-full text-xs font-bold capitalize 
-                      ${order.status === 'delivered' ? 'bg-green-100 text-green-700' : 
-                        order.status === 'shipping' ? 'bg-blue-100 text-blue-700' : 
-                        'bg-yellow-100 text-yellow-700'}`}>
-                      {order.status === 'delivered' ? 'Entregue' : order.status === 'shipping' ? 'Em Trânsito' : 'Pendente'}
+                   <div className={`px-3 py-1 rounded-full text-xs font-bold capitalize flex items-center gap-1
+                      ${order.status === 'delivered' ? 'bg-green-50 text-green-700 border border-green-100' : 
+                        order.status === 'shipping' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 
+                        'bg-yellow-50 text-yellow-700 border border-yellow-100'}`}>
+                      {order.status === 'delivered' ? <CheckCircle className="w-3 h-3"/> : order.status === 'shipping' ? <Truck className="w-3 h-3"/> : null}
+                      {order.status === 'delivered' ? 'Entregue' : order.status === 'shipping' ? 'Enviado' : 'Processando'}
                    </div>
                 </div>
                 <div className="flex gap-2 mb-3 overflow-hidden">
                    {order.items.slice(0, 3).map((item, i) => (
-                      <div key={i} className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
-                         <img src={item.image} className="w-full h-full object-cover" />
+                      <div key={i} className="w-14 h-14 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 p-1">
+                         <img src={item.image} className="w-full h-full object-contain mix-blend-multiply" />
                       </div>
                    ))}
                    {order.items.length > 3 && (
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500 font-bold">
+                      <div className="w-14 h-14 bg-gray-50 rounded-lg flex items-center justify-center text-xs text-gray-500 font-bold border border-gray-100">
                          +{order.items.length - 3}
                       </div>
                    )}
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-gray-50">
                    <span className="text-sm text-gray-500">Total: <span className="text-gray-900 font-bold">R$ {order.total.toFixed(2)}</span></span>
-                   <button className="text-primary font-bold text-sm">Detalhes</button>
+                   <button className="text-primary font-bold text-sm px-4 py-2 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">Ver Detalhes</button>
                 </div>
              </div>
           ))}
@@ -357,48 +350,48 @@ const OrdersScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 const SettingsScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
    const [notifications, setNotifications] = useState(true);
    return (
-     <div className="h-full flex flex-col bg-gray-50 animate-slide-in">
+     <div className="h-full flex flex-col bg-white animate-slide-in">
         <div className="bg-white p-4 flex items-center gap-4 border-b border-gray-100 sticky top-0 z-10">
-          <button onClick={onBack} className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft className="w-6 h-6" /></button>
+          <button onClick={onBack} className="p-2 rounded-full hover:bg-gray-50 border border-gray-100"><ChevronLeft className="w-6 h-6" /></button>
           <h1 className="font-bold text-lg">Configurações</h1>
         </div>
         <div className="p-4 space-y-6">
            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <h3 className="font-bold mb-4 text-gray-900">Geral</h3>
+              <h3 className="font-bold mb-4 text-gray-900 text-sm uppercase tracking-wider">Preferências</h3>
               <div className="flex items-center justify-between py-2">
                  <div className="flex items-center gap-3">
                     <Bell className="w-5 h-5 text-gray-500" />
-                    <span>Notificações Push</span>
+                    <span className="text-gray-700">Notificações Push</span>
                  </div>
                  <button 
                    onClick={() => setNotifications(!notifications)}
-                   className={`w-12 h-6 rounded-full transition-colors relative ${notifications ? 'bg-primary' : 'bg-gray-300'}`}
+                   className={`w-12 h-6 rounded-full transition-colors relative ${notifications ? 'bg-primary' : 'bg-gray-200'}`}
                  >
-                    <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${notifications ? 'left-6.5 translate-x-1' : 'left-0.5'}`} />
+                    <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform ${notifications ? 'left-6.5 translate-x-1' : 'left-0.5'}`} />
                  </button>
               </div>
            </div>
 
            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <h3 className="font-bold mb-4 text-gray-900">Sobre</h3>
+              <h3 className="font-bold mb-4 text-gray-900 text-sm uppercase tracking-wider">Legal</h3>
               <button className="w-full flex items-center justify-between py-3 border-b border-gray-50">
                  <div className="flex items-center gap-3">
                     <Shield className="w-5 h-5 text-gray-500" />
-                    <span>Política de Privacidade</span>
+                    <span className="text-gray-700">Política de Privacidade</span>
                  </div>
                  <ChevronLeft className="w-4 h-4 text-gray-300 rotate-180" />
               </button>
               <button className="w-full flex items-center justify-between py-3">
                  <div className="flex items-center gap-3">
-                    <Package className="w-5 h-5 text-gray-500" />
-                    <span>Termos de Uso</span>
+                    <Info className="w-5 h-5 text-gray-500" />
+                    <span className="text-gray-700">Termos de Uso</span>
                  </div>
                  <ChevronLeft className="w-4 h-4 text-gray-300 rotate-180" />
               </button>
            </div>
            
-           <div className="text-center text-xs text-gray-400">
-              App v1.3.0 (Lina Build)<br/>© 2023 Lina Materiais Elétricos
+           <div className="text-center text-xs text-gray-400 mt-8">
+              Versão 2.0.1<br/>Desenvolvido para Lina Design
            </div>
         </div>
      </div>
@@ -422,14 +415,13 @@ const HomeScreen: React.FC<{
 
   if (isApiLoading) {
     return (
-      <div className="space-y-6 pb-24 px-4 pt-6 animate-pulse">
+      <div className="space-y-6 pb-24 px-4 pt-6 animate-pulse bg-white h-full">
         <div className="bg-gray-100 h-12 rounded-full w-full" />
         <div className="flex gap-4 overflow-hidden mt-6">
            <Skeleton className="min-w-[90%] h-48 rounded-2xl" />
-           <Skeleton className="min-w-[90%] h-48 rounded-2xl" />
         </div>
         <div className="flex gap-4 mt-6">
-          {[1,2,3,4].map(i => <Skeleton key={i} className="w-16 h-20 rounded-lg" />)}
+          {[1,2,3,4].map(i => <Skeleton key={i} className="w-20 h-24 rounded-lg" />)}
         </div>
         <div className="grid grid-cols-2 gap-4 mt-6">
            {[1,2,3,4].map(i => <ProductCardSkeleton key={i} />)}
@@ -439,35 +431,37 @@ const HomeScreen: React.FC<{
   }
 
   return (
-    <div className="space-y-6 pb-24 animate-fade-in">
-      <div className="px-4 pt-2">
-        <div className="bg-gray-100 rounded-full flex items-center px-4 py-3 shadow-sm border border-gray-200/50">
+    <div className="space-y-6 pb-24 animate-fade-in bg-white min-h-full">
+      <div className="px-4 pt-2 sticky top-0 bg-white z-10 pb-2">
+        <div className="bg-gray-50 rounded-full flex items-center px-4 py-3 shadow-sm border border-gray-100">
           <Search className="w-5 h-5 text-gray-400 mr-2" />
-          <input type="text" placeholder="Busque por produto, marca..." className="bg-transparent w-full outline-none text-gray-700 placeholder-gray-400"/>
+          <input type="text" placeholder="O que você procura hoje?" className="bg-transparent w-full outline-none text-gray-900 placeholder-gray-400"/>
         </div>
       </div>
 
       <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar px-4 gap-4">
         {BANNERS.map((banner) => (
-          <div key={banner.id} className="snap-center min-w-[90%] h-48 rounded-2xl overflow-hidden relative shadow-md">
-            <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4 text-white">
-              <h2 className="text-2xl font-bold">{banner.title}</h2>
-              <p className="font-medium text-gray-200">{banner.subtitle}</p>
+          <div key={banner.id} className="snap-center min-w-[90%] h-48 rounded-2xl overflow-hidden relative shadow-md group">
+            <img src={banner.image} alt={banner.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-5 text-white">
+              <h2 className="text-2xl font-bold mb-1">{banner.title}</h2>
+              <p className="font-medium text-gray-200 text-sm flex items-center gap-1">{banner.subtitle} <ArrowRight className="w-4 h-4"/></p>
             </div>
           </div>
         ))}
       </div>
 
       <div className="px-4">
-        <h3 className="text-lg font-bold text-secondary mb-3">Departamentos</h3>
+        <div className="flex justify-between items-center mb-4">
+           <h3 className="text-lg font-bold text-gray-900">Categorias</h3>
+        </div>
         <div className="flex space-x-4 overflow-x-auto no-scrollbar pb-2">
           {categories.map((cat) => (
-            <div key={cat.id} className="flex flex-col items-center space-y-2 min-w-[72px]">
-              <div className="w-16 h-16 rounded-full bg-white p-2 border border-gray-200 shadow-sm">
+            <div key={cat.id} className="flex flex-col items-center space-y-2 min-w-[72px] cursor-pointer active:scale-95 transition-transform">
+              <div className="w-16 h-16 rounded-full bg-white p-2 border border-gray-100 shadow-sm flex items-center justify-center hover:border-primary hover:shadow-md transition-all">
                 <img src={cat.image} alt={cat.name} className="w-full h-full rounded-full object-cover" />
               </div>
-              <span className="text-xs font-medium text-gray-600 text-center leading-tight">{cat.name}</span>
+              <span className="text-xs font-medium text-gray-600 text-center leading-tight line-clamp-2 max-w-[70px]">{cat.name}</span>
             </div>
           ))}
         </div>
@@ -475,10 +469,10 @@ const HomeScreen: React.FC<{
 
       <div className="px-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-secondary">Ofertas do Dia</h3>
-          <button className="text-primary text-sm font-semibold">Ver tudo</button>
+          <h3 className="text-lg font-bold text-gray-900">Destaques</h3>
+          <button className="text-primary text-sm font-semibold hover:bg-red-50 px-3 py-1 rounded-full transition-colors">Ver todos</button>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {products.map((product) => (
             <ProductCard 
               key={product.id}
@@ -515,15 +509,11 @@ const CatalogScreen: React.FC<{
 
   const filteredProducts = useMemo(() => {
     let result = activeCat === 'Todos' ? [...products] : products.filter(p => p.category === activeCat);
-    
-    // Price Filter
     result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
 
-    // Sorting
     if (sortBy === 'price_asc') result.sort((a,b) => a.price - b.price);
     if (sortBy === 'price_desc') result.sort((a,b) => b.price - a.price);
     if (sortBy === 'rating') result.sort((a,b) => b.rating - a.rating);
-    // newest assumes index order or specific date field (using reverse index for mock)
     if (sortBy === 'newest') result.reverse();
 
     return result;
@@ -533,32 +523,37 @@ const CatalogScreen: React.FC<{
   const isWishlisted = (id: string) => wishlist.some(i => i.id === id);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 relative">
-       <div className="px-4 py-4 bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="flex flex-col h-full bg-white relative">
+       <div className="px-4 py-4 bg-white border-b border-gray-100 sticky top-0 z-10 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold text-secondary">Catálogo</h1>
+          <h1 className="text-xl font-bold text-gray-900">Catálogo</h1>
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-full transition-colors ${showFilters ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'}`}
+            className={`p-2 rounded-full transition-colors ${showFilters ? 'bg-primary text-white shadow-lg' : 'bg-gray-100 text-gray-600'}`}
           >
             <SlidersHorizontal className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Filters Panel */}
         {showFilters && (
-          <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200 animate-slide-in">
+          <div className="mb-4 bg-white p-4 rounded-xl border border-gray-100 shadow-lg animate-slide-in absolute left-4 right-4 z-20 top-16">
              <div className="mb-4">
                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Ordenar Por</label>
                 <div className="grid grid-cols-2 gap-2">
-                   <button onClick={() => setSortBy('newest')} className={`text-sm py-2 px-3 rounded-lg border ${sortBy === 'newest' ? 'border-primary text-primary bg-white' : 'border-transparent text-gray-500'}`}>Lançamentos</button>
-                   <button onClick={() => setSortBy('rating')} className={`text-sm py-2 px-3 rounded-lg border ${sortBy === 'rating' ? 'border-primary text-primary bg-white' : 'border-transparent text-gray-500'}`}>Melhor Avaliação</button>
-                   <button onClick={() => setSortBy('price_asc')} className={`text-sm py-2 px-3 rounded-lg border ${sortBy === 'price_asc' ? 'border-primary text-primary bg-white' : 'border-transparent text-gray-500'}`}>Menor Preço</button>
-                   <button onClick={() => setSortBy('price_desc')} className={`text-sm py-2 px-3 rounded-lg border ${sortBy === 'price_desc' ? 'border-primary text-primary bg-white' : 'border-transparent text-gray-500'}`}>Maior Preço</button>
+                   {/* Filters Buttons */}
+                   {[['newest','Lançamentos'], ['rating','Melhor Avaliação'], ['price_asc','Menor Preço'], ['price_desc','Maior Preço']].map(([key, label]) => (
+                     <button 
+                       key={key}
+                       onClick={() => setSortBy(key as any)} 
+                       className={`text-sm py-2 px-3 rounded-lg border transition-colors ${sortBy === key ? 'border-primary text-primary bg-red-50' : 'border-gray-200 text-gray-600'}`}
+                     >
+                       {label}
+                     </button>
+                   ))}
                 </div>
              </div>
              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Faixa de Preço (Máx: R$ {priceRange[1]})</label>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Preço Máximo: R$ {priceRange[1]}</label>
                 <input 
                   type="range" 
                   min="0" max="10000" step="100" 
@@ -575,7 +570,7 @@ const CatalogScreen: React.FC<{
             <button
               key={cat}
               onClick={() => setActiveCat(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCat === cat ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'}`}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${activeCat === cat ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
             >
               {cat}
             </button>
@@ -588,9 +583,12 @@ const CatalogScreen: React.FC<{
               {[1,2,3,4,5,6].map(i => <ProductCardSkeleton key={i} />)}
            </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-400"><p>Nenhum produto encontrado.</p></div>
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-2">
+            <Search className="w-12 h-12 opacity-20"/>
+            <p>Nenhum produto encontrado.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {filteredProducts.map((product) => (
               <ProductCard 
                 key={product.id}
@@ -654,29 +652,25 @@ const ProductDetailScreen: React.FC<{
       try {
         await navigator.share({
           title: product.name,
-          text: `Confira este produto incrível: ${product.name}`,
+          text: `Confira este produto na Lina: ${product.name}`,
           url: window.location.href,
         });
       } catch (error) {
         console.log('Error sharing', error);
       }
     } else {
-      alert("Compartilhar não suportado neste navegador. Link copiado!");
-      navigator.clipboard.writeText(window.location.href);
+      alert("Link copiado para a área de transferência!");
     }
   };
 
   if (loading) {
     return (
       <div className="bg-white min-h-full pb-24">
-        <Skeleton className="h-[45vh] w-full rounded-none" />
-        <div className="px-5 py-6 -mt-6 bg-white rounded-t-[2rem] relative z-10 space-y-4">
+        <Skeleton className="h-[50vh] w-full rounded-none bg-gray-100" />
+        <div className="px-6 py-8 -mt-8 bg-white rounded-t-[2.5rem] relative z-10 space-y-4">
            <Skeleton className="h-8 w-3/4" />
-           <div className="flex justify-between">
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-8 w-24" />
-           </div>
-           <Skeleton className="h-32 w-full rounded-xl mt-4" />
+           <Skeleton className="h-6 w-1/4" />
+           <Skeleton className="h-32 w-full rounded-xl mt-6" />
         </div>
       </div>
     );
@@ -685,74 +679,86 @@ const ProductDetailScreen: React.FC<{
   return (
     <div className="bg-white min-h-full pb-24 animate-slide-in">
       <div className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-20 pointer-events-none">
-        <button onClick={onBack} className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-sm pointer-events-auto hover:bg-white"><ChevronLeft className="w-6 h-6 text-gray-800" /></button>
+        <button onClick={onBack} className="bg-white/80 backdrop-blur-md p-2 rounded-full shadow-sm pointer-events-auto hover:bg-white border border-gray-100"><ChevronLeft className="w-6 h-6 text-gray-800" /></button>
         <div className="flex gap-2 pointer-events-auto">
-            <button onClick={() => onToggleWishlist(product)} className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-sm hover:bg-white">
+            <button onClick={() => onToggleWishlist(product)} className="bg-white/80 backdrop-blur-md p-2 rounded-full shadow-sm hover:bg-white border border-gray-100">
                 <Heart className={`w-6 h-6 transition-all duration-300 ${isWishlisted ? 'text-primary fill-primary' : 'text-gray-800'} ${animatingHeart ? 'scale-150' : 'scale-100'}`} />
             </button>
-            <button onClick={handleShare} className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-sm hover:bg-white"><Share2 className="w-6 h-6 text-gray-800" /></button>
+            <button onClick={handleShare} className="bg-white/80 backdrop-blur-md p-2 rounded-full shadow-sm hover:bg-white border border-gray-100"><Share2 className="w-6 h-6 text-gray-800" /></button>
         </div>
       </div>
-      <div className="h-[45vh] bg-gray-100 relative">
-        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+      <div className="h-[50vh] bg-white relative flex items-center justify-center p-8">
+        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
       </div>
-      <div className="px-5 py-6 -mt-6 bg-white rounded-t-[2rem] relative z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <div className="px-6 py-8 -mt-8 bg-white rounded-t-[2.5rem] relative z-10 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] border-t border-gray-50">
         <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-        <div className="flex justify-between items-start mb-4">
-          <div>
-             <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-2">{product.name}</h1>
-             <div className="flex items-center text-sm text-gray-500">
+        
+        <div className="mb-6">
+           <span className="text-primary font-bold text-xs uppercase tracking-wider bg-red-50 px-2 py-1 rounded-md">{product.category}</span>
+           <h1 className="text-2xl font-bold text-gray-900 leading-tight mt-2 mb-2">{product.name}</h1>
+           <div className="flex items-center text-sm text-gray-500 gap-4">
+             <div className="flex items-center">
                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
                <span className="font-medium text-gray-900 mr-1">{product.rating}</span>
-               <span>({reviews.length} avaliações)</span>
              </div>
-          </div>
-          <div className="flex flex-col items-end">
+             <span>{reviews.length} avaliações</span>
+             <span className="text-green-600 font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Em Estoque</span>
+           </div>
+        </div>
+
+        <div className="flex justify-between items-end mb-8 border-b border-gray-50 pb-6">
+          <div className="flex flex-col">
              {product.oldPrice && <span className="text-sm text-gray-400 line-through">R$ {product.oldPrice.toFixed(2)}</span>}
-             <span className="text-2xl font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+             <span className="text-3xl font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+             <span className="text-xs text-gray-400">Marca: Lina</span>
           </div>
         </div>
-        <div className="mb-6">
-          <h3 className="font-semibold text-secondary mb-2">Descrição</h3>
+
+        <div className="mb-8">
+          <h3 className="font-bold text-gray-900 mb-3 text-lg">Sobre o produto</h3>
           <p className="text-gray-600 leading-relaxed text-sm">{product.description}</p>
         </div>
         
         {/* Reviews Section */}
-        <div className="border-t border-gray-100 pt-6">
-           <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg text-secondary">Avaliações</h3>
-              <button onClick={() => setShowReviewForm(!showReviewForm)} className="text-primary text-sm font-bold">Avaliar</button>
+        <div className="pt-2">
+           <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-lg text-gray-900">Avaliações</h3>
+              <button onClick={() => setShowReviewForm(!showReviewForm)} className="text-primary text-sm font-bold bg-red-50 px-3 py-1 rounded-lg">Escrever</button>
            </div>
            
            {showReviewForm && (
-             <form onSubmit={handleSubmitReview} className="bg-gray-50 p-4 rounded-xl mb-6 animate-slide-in">
+             <form onSubmit={handleSubmitReview} className="bg-gray-50 p-4 rounded-xl mb-6 animate-slide-in border border-gray-100">
                 <div className="flex gap-2 mb-3">
                    {[1,2,3,4,5].map(star => (
                       <button type="button" key={star} onClick={() => setNewReviewRating(star)}>
-                         <Star className={`w-6 h-6 ${star <= newReviewRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                         <Star className={`w-8 h-8 ${star <= newReviewRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                       </button>
                    ))}
                 </div>
                 <textarea 
-                  className="w-full p-3 rounded-lg border border-gray-200 text-sm mb-3 outline-none focus:border-primary" 
+                  className="w-full p-3 rounded-lg border border-gray-200 text-sm mb-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white" 
                   rows={3} 
-                  placeholder="Conte o que achou do produto..."
+                  placeholder="O que você achou?"
                   value={newReviewText}
                   onChange={e => setNewReviewText(e.target.value)}
                   required
                 />
-                <Button type="submit" fullWidth>Enviar Avaliação</Button>
+                <Button type="submit" fullWidth>Enviar</Button>
              </form>
            )}
 
-           <div className="space-y-4">
+           <div className="space-y-6">
               {reviews.length === 0 ? (
-                <p className="text-gray-400 text-sm text-center py-4">Seja o primeiro a avaliar!</p>
+                <div className="text-center py-6 bg-gray-50 rounded-xl border border-gray-100 border-dashed">
+                    <p className="text-gray-400 text-sm">Este produto ainda não tem avaliações.</p>
+                </div>
               ) : (
                 reviews.map(review => (
-                   <div key={review.id} className="border-b border-gray-50 last:border-0 pb-4 last:pb-0">
+                   <div key={review.id} className="border-b border-gray-50 last:border-0 pb-4">
                       <div className="flex justify-between items-center mb-1">
-                         <span className="font-bold text-sm">{review.userName}</span>
+                         <span className="font-bold text-sm text-gray-900">{review.userName}</span>
                          <span className="text-xs text-gray-400">{review.date}</span>
                       </div>
                       <div className="flex gap-0.5 mb-2">
@@ -768,9 +774,13 @@ const ProductDetailScreen: React.FC<{
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex items-center gap-3 z-20">
-         <Button variant="outline" onClick={() => onAddToCart(product)} className="flex-1 border-primary text-primary hover:bg-red-50">Adicionar</Button>
-         <Button onClick={() => onBuyNow(product)} className="flex-1 bg-primary shadow-primary/20">Comprar</Button>
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex items-center gap-3 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
+         <Button variant="outline" onClick={() => onAddToCart(product)} className="flex-1 border-primary text-primary hover:bg-red-50 h-12">
+            Adicionar à Sacola
+         </Button>
+         <Button onClick={() => onBuyNow(product)} className="flex-1 bg-primary shadow-lg shadow-primary/30 h-12">
+            Comprar Agora
+         </Button>
       </div>
     </div>
   );
@@ -786,43 +796,48 @@ const CartScreen: React.FC<{
 
   if (cart.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full pb-20 p-6 text-center animate-fade-in">
-        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6 text-gray-400"><ShoppingBag className="w-10 h-10" /></div>
+      <div className="flex flex-col items-center justify-center h-full pb-20 p-8 text-center animate-fade-in bg-white">
+        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 text-gray-300"><ShoppingBag className="w-12 h-12" /></div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">Sua sacola está vazia</h2>
-        <Button variant="outline" onClick={() => window.location.hash = ''}>Ir às compras</Button>
+        <p className="text-gray-500 mb-8 max-w-[200px] mx-auto">Navegue pelo catálogo e aproveite nossas ofertas.</p>
+        <Button variant="primary" onClick={() => window.location.hash = ''} className="px-10">Ir às compras</Button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <div className="px-4 py-4 bg-white border-b border-gray-100 sticky top-0 z-10"><h1 className="text-xl font-bold text-secondary">Meu Carrinho ({cart.length})</h1></div>
-      <div className="flex-1 overflow-y-auto p-4 pb-48 space-y-4">
+    <div className="flex flex-col h-full bg-white">
+      <div className="px-4 py-4 bg-white border-b border-gray-100 sticky top-0 z-10"><h1 className="text-xl font-bold text-gray-900">Minha Sacola ({cart.length})</h1></div>
+      <div className="flex-1 overflow-y-auto p-4 pb-56 space-y-4">
         {cart.map((item) => (
-          <div key={item.id} className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex gap-3 relative overflow-hidden">
-             <div className="w-24 h-24 bg-gray-50 rounded-xl overflow-hidden shrink-0"><img src={item.image} alt={item.name} className="w-full h-full object-cover" /></div>
+          <div key={item.id} className="bg-white p-3 rounded-2xl border border-gray-100 flex gap-4 relative overflow-hidden shadow-sm">
+             <div className="w-24 h-24 bg-white rounded-xl overflow-hidden shrink-0 border border-gray-50"><img src={item.image} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" /></div>
              <div className="flex-1 flex flex-col justify-between py-1">
-                <div className="pr-8"><h4 className="font-semibold text-gray-900 text-sm line-clamp-1">{item.name}</h4><p className="text-xs text-gray-500">{item.category}</p></div>
-                <div className="flex justify-between items-end">
+                <div className="pr-8"><h4 className="font-semibold text-gray-900 text-sm line-clamp-2">{item.name}</h4><p className="text-xs text-gray-400 mt-1">{item.category}</p></div>
+                <div className="flex justify-between items-end mt-2">
                     <div className="flex flex-col">
                       <span className="font-bold text-primary text-lg">R$ {(item.price * item.quantity).toFixed(2)}</span>
-                      {item.quantity > 1 && <span className="text-xs text-gray-400">R$ {item.price.toFixed(2)} cada</span>}
                     </div>
                     <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200 h-8">
                         <button onClick={() => onUpdateQty(item.id, -1)} className="px-2 h-full flex items-center justify-center text-gray-600 active:bg-gray-200 rounded-l-lg hover:text-red-500"><Minus className="w-3 h-3" /></button>
-                        <span className="w-8 text-center text-xs font-semibold">{item.quantity}</span>
+                        <span className="w-8 text-center text-xs font-bold">{item.quantity}</span>
                         <button onClick={() => onUpdateQty(item.id, 1)} className="px-2 h-full flex items-center justify-center text-gray-600 active:bg-gray-200 rounded-r-lg"><Plus className="w-3 h-3" /></button>
                     </div>
                 </div>
              </div>
-             <button onClick={() => onRemove(item.id)} className="absolute top-3 right-3 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"><Trash2 className="w-4 h-4" /></button>
+             <button onClick={() => onRemove(item.id)} className="absolute top-3 right-3 p-2 text-gray-300 hover:text-red-500 rounded-full transition-colors"><Trash2 className="w-4 h-4" /></button>
           </div>
         ))}
       </div>
       <div className="fixed bottom-[80px] left-0 right-0 bg-white border-t border-gray-100 p-6 rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-10">
-         <div className="flex justify-between items-center mb-2 text-sm text-gray-500"><span>Subtotal</span><span>R$ {total.toFixed(2)}</span></div>
-         <div className="flex justify-between items-center mb-6"><span className="font-bold text-gray-900 text-lg">Total</span><span className="font-bold text-primary text-2xl">R$ {total.toFixed(2)}</span></div>
-         <Button onClick={onCheckout} fullWidth>Finalizar Compra</Button>
+         <div className="space-y-2 mb-4">
+            <div className="flex justify-between items-center text-sm text-gray-500"><span>Subtotal</span><span>R$ {total.toFixed(2)}</span></div>
+            <div className="flex justify-between items-center text-sm text-gray-500"><span>Frete</span><span className="text-green-600 font-bold">Grátis</span></div>
+            <div className="flex justify-between items-center text-sm text-gray-500"><span>Descontos</span><span>-</span></div>
+         </div>
+         <div className="h-px bg-gray-100 w-full mb-4"></div>
+         <div className="flex justify-between items-center mb-6"><span className="font-bold text-gray-900 text-xl">Total</span><span className="font-bold text-primary text-2xl">R$ {total.toFixed(2)}</span></div>
+         <Button onClick={onCheckout} fullWidth className="shadow-lg shadow-primary/30 h-12 text-lg">Finalizar Compra</Button>
       </div>
     </div>
   );
@@ -836,10 +851,10 @@ const ProfileScreen: React.FC<{
   user: any
 }> = ({ wishlist, onNavigate, onRemoveFromWishlist, onGoTo, user }) => {
     return (
-        <div className="p-4 pt-8 h-full bg-gray-50 pb-24 overflow-y-auto">
+        <div className="p-4 pt-8 h-full bg-white pb-24 overflow-y-auto">
             {user ? (
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
+              <div className="flex items-center gap-4 mb-8 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">
                     {user.name.charAt(0)}
                 </div>
                 <div>
@@ -848,38 +863,46 @@ const ProfileScreen: React.FC<{
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center"><User className="w-8 h-8 text-gray-500" /></div>
-                <div><h2 className="text-xl font-bold text-gray-900">Olá, Visitante</h2><p className="text-gray-500 text-sm">Entre ou cadastre-se</p></div>
+              <div className="flex items-center gap-4 mb-8 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border border-gray-200"><User className="w-8 h-8 text-gray-400" /></div>
+                <div><h2 className="text-xl font-bold text-gray-900">Olá, Visitante</h2><p className="text-gray-500 text-sm">Entre ou cadastre-se para ver seus dados</p></div>
               </div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                <button onClick={() => onGoTo(AppScreen.ORDERS)} className="w-full flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8 shadow-sm">
+                <button onClick={() => onGoTo(AppScreen.ORDERS)} className="w-full flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-3"><Package className="w-5 h-5 text-primary" /><span className="font-medium text-gray-700">Meus Pedidos</span></div>
                     <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
                 </button>
-                <button className="w-full flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50">
+                 <button className="w-full flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3"><MapPin className="w-5 h-5 text-primary" /><span className="font-medium text-gray-700">Meus Endereços</span></div>
+                    <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+                </button>
+                <button className="w-full flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-3"><CreditCard className="w-5 h-5 text-primary" /><span className="font-medium text-gray-700">Cartões Salvos</span></div>
                     <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
                 </button>
-                <button onClick={() => onGoTo(AppScreen.SETTINGS)} className="w-full flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50">
+                <button onClick={() => onGoTo(AppScreen.SETTINGS)} className="w-full flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-3"><Settings className="w-5 h-5 text-primary" /><span className="font-medium text-gray-700">Configurações</span></div>
                     <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
                 </button>
             </div>
 
-            <div className="mb-6">
-                <h3 className="font-bold text-secondary mb-3 flex items-center gap-2"><Heart className="w-4 h-4 text-red-500 fill-red-500" />Minha Lista de Desejos ({wishlist.length})</h3>
+            <div className="mb-8">
+                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 px-1">
+                   <Heart className="w-4 h-4 text-primary fill-primary" /> Favoritos ({wishlist.length})
+                </h3>
                 {wishlist.length === 0 ? (
-                    <div className="bg-white rounded-2xl p-6 text-center text-gray-400 border border-gray-100 text-sm">Sua lista de desejos está vazia.</div>
+                    <div className="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100 border-dashed">
+                       <p className="text-gray-400 text-sm">Você ainda não favoritou nenhum produto.</p>
+                    </div>
                 ) : (
                     <div className="space-y-3">
                         {wishlist.map(product => (
-                            <div key={product.id} className="bg-white p-3 rounded-2xl border border-gray-100 flex gap-3 items-center active:scale-[0.99] transition-transform" onClick={() => onNavigate(product)}>
-                                <img src={product.image} alt={product.name} className="w-16 h-16 rounded-lg object-cover bg-gray-50" />
+                            <div key={product.id} className="bg-white p-3 rounded-2xl border border-gray-100 flex gap-3 items-center shadow-sm active:scale-[0.99] transition-transform" onClick={() => onNavigate(product)}>
+                                <img src={product.image} alt={product.name} className="w-16 h-16 rounded-lg object-contain bg-white border border-gray-50" />
                                 <div className="flex-1"><h4 className="font-medium text-gray-900 text-sm line-clamp-1">{product.name}</h4><p className="text-primary font-bold text-sm">R$ {product.price.toFixed(2)}</p></div>
-                                <button onClick={(e) => { e.stopPropagation(); onRemoveFromWishlist(product); }} className="p-2 text-gray-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); onRemoveFromWishlist(product); }} className="p-2 text-gray-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                             </div>
                         ))}
                     </div>
@@ -887,9 +910,9 @@ const ProfileScreen: React.FC<{
             </div>
             
             {!user ? (
-               <Button onClick={() => onGoTo(AppScreen.LOGIN)} fullWidth>Login / Cadastro</Button>
+               <Button onClick={() => onGoTo(AppScreen.LOGIN)} fullWidth className="shadow-lg shadow-primary/20">Login / Cadastro</Button>
             ) : (
-               <Button variant="outline" className="text-red-500 border-red-200" fullWidth onClick={() => onGoTo(AppScreen.LOGIN)}><LogOut className="w-4 h-4 mr-2"/> Sair</Button>
+               <Button variant="outline" className="text-red-500 border-red-100 hover:bg-red-50" fullWidth onClick={() => onGoTo(AppScreen.LOGIN)}><LogOut className="w-4 h-4 mr-2"/> Sair da Conta</Button>
             )}
         </div>
     )
@@ -898,21 +921,18 @@ const ProfileScreen: React.FC<{
 // --- MAIN APP ---
 
 const App: React.FC = () => {
-  // Navigation Stack (History) for Native Feel
   const [navStack, setNavStack] = useState<AppScreen[]>([AppScreen.SPLASH]);
   const [flyingIcons, setFlyingIcons] = useState<{id: number, x: number, y: number}[]>([]);
   
   const currentScreen = navStack[navStack.length - 1];
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [user, setUser] = useState<any>(null); // Mock user state
+  const [user, setUser] = useState<any>(null);
   
-  // -- Data State --
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isApiLoading, setIsApiLoading] = useState(true);
 
-  // -- Store State --
   const [cart, setCart] = useState<CartItem[]>(() => {
     try { const saved = localStorage.getItem('cart'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; }
   });
@@ -923,24 +943,20 @@ const App: React.FC = () => {
     try { const saved = localStorage.getItem('reviews'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; }
   });
 
-  // Effects
   useEffect(() => { localStorage.setItem('cart', JSON.stringify(cart)); }, [cart]);
   useEffect(() => { localStorage.setItem('wishlist', JSON.stringify(wishlist)); }, [wishlist]);
   useEffect(() => { localStorage.setItem('reviews', JSON.stringify(reviews)); }, [reviews]);
   
-  // Data Fetching Effect
   useEffect(() => {
     const fetchData = async () => {
       setIsApiLoading(true);
       try {
         if (USE_MOCK_DATA) {
-          // Simulate network delay
           await new Promise(resolve => setTimeout(resolve, 1500));
           setProducts(MOCK_PRODUCTS);
           setCategories(MOCK_CATEGORIES);
         } else {
           try {
-            // Fetch Products
             const prodResponse = await fetch(`${API_BASE_URL}/products`);
             if (!prodResponse.ok) throw new Error(`Products API error! status: ${prodResponse.status}`);
             
@@ -951,7 +967,6 @@ const App: React.FC = () => {
             const prodData = await prodResponse.json();
             setProducts(prodData);
             
-            // Fetch Categories
             const catResponse = await fetch(`${API_BASE_URL}/categories`);
             if (!catResponse.ok) throw new Error(`Categories API error! status: ${catResponse.status}`);
             
@@ -963,11 +978,12 @@ const App: React.FC = () => {
             setCategories(catData); 
 
           } catch (innerError) {
-             throw innerError; // Rethrow to be caught by the outer catch
+             console.warn("API Error, falling back to mock", innerError);
+             setProducts(MOCK_PRODUCTS);
+             setCategories(MOCK_CATEGORIES);
           }
         }
       } catch (error) {
-        console.warn("API unavailable, using mock data.", error);
         setProducts(MOCK_PRODUCTS);
         setCategories(MOCK_CATEGORIES);
       } finally {
@@ -978,7 +994,6 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
-  // Splash Screen Timer
   useEffect(() => {
     if (currentScreen === AppScreen.SPLASH) {
        setTimeout(() => {
@@ -992,13 +1007,11 @@ const App: React.FC = () => {
     }
   }, [currentScreen]);
 
-  // Navigation Helpers
   const pushScreen = (screen: AppScreen) => setNavStack(prev => [...prev, screen]);
   const popScreen = () => setNavStack(prev => prev.length > 1 ? prev.slice(0, -1) : prev);
   const replaceScreen = (screen: AppScreen) => setNavStack(prev => [...prev.slice(0, -1), screen]);
   const resetToHome = () => setNavStack([AppScreen.HOME]);
 
-  // Actions
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     pushScreen(AppScreen.PRODUCT_DETAILS);
@@ -1036,12 +1049,32 @@ const App: React.FC = () => {
     setReviews(prev => [newReview, ...prev]);
   };
 
+  // Integration with Loja Integrada Checkout via WebView/External Link
+  const handleCheckout = () => {
+     // Construct Cart URL for Loja Integrada
+     // Example: https://www.lina.com.br/carrinho/produto/ID/qtde/QTY
+     // Since bulk add isn't standard in URL, we redirect to cart or first item.
+     // In a real PWA/WebView, we'd inject JS or use the official API to create a cart session.
+     
+     if(cart.length === 0) return;
+     
+     // Simulation of opening the secure checkout
+     const checkoutUrl = `https://www.lina.com.br/carrinho/produto/${cart[0].id}/qtde/${cart[0].quantity}`;
+     
+     if (confirm("Você será redirecionado para o ambiente seguro da Loja Integrada para finalizar o pagamento.")) {
+        // In a real Native App (Capacitor), use Browser.open({ url: checkoutUrl });
+        window.open(checkoutUrl, '_blank');
+     }
+  }
+
   const handleBuyNow = (product: Product) => {
-     alert(`Checkout direto iniciado para: ${product.name}`);
+     // Direct to checkout with single item
+     const checkoutUrl = `https://www.lina.com.br/carrinho/produto/${product.id}/qtde/1`;
+     window.open(checkoutUrl, '_blank');
   }
 
   const handleLogin = () => {
-     setUser({ name: "Lina Client", email: "client@lina.com.br" }); // Mock Login
+     setUser({ name: "Cliente Lina", email: "cliente@email.com" }); 
      resetToHome();
   };
 
@@ -1054,7 +1087,6 @@ const App: React.FC = () => {
     setFlyingIcons(prev => prev.filter(i => i.id !== id));
   };
 
-  // Nav Bar Logic
   const mainTabs = [AppScreen.HOME, AppScreen.CATALOG, AppScreen.CART, AppScreen.PROFILE];
   const isTabBarActuallyVisible = mainTabs.includes(currentScreen);
 
@@ -1079,7 +1111,7 @@ const App: React.FC = () => {
     <div className="w-full h-full max-w-md bg-white shadow-2xl overflow-hidden relative font-sans text-gray-900 flex flex-col md:rounded-3xl md:h-[95vh] md:border-4 md:border-gray-800">
       
       {/* Content Area */}
-      <main className="flex-1 overflow-hidden relative">
+      <main className="flex-1 overflow-hidden relative bg-white">
         {flyingIcons.map(icon => (
           <FlyingIcon key={icon.id} start={{x: icon.x, y: icon.y}} onEnd={() => removeFlyingIcon(icon.id)} />
         ))}
@@ -1096,7 +1128,7 @@ const App: React.FC = () => {
         {currentScreen === AppScreen.LOGIN && (
            <LoginScreen 
               onLogin={handleLogin} 
-              onRegister={() => alert('Register Mock')} 
+              onRegister={() => alert('Redirecionando para cadastro web...')} 
               onSkip={() => resetToHome()} 
            />
         )}
@@ -1125,7 +1157,7 @@ const App: React.FC = () => {
         
         {currentScreen === AppScreen.CART && (
             <CartScreen 
-                cart={cart} onUpdateQty={(id, d) => handleUpdateQty(cart.find(c=>c.id===id)!, d)} onRemove={handleRemoveCart} onCheckout={() => alert('Redirecting to Loja Integrada Checkout...')} 
+                cart={cart} onUpdateQty={(id, d) => handleUpdateQty(cart.find(c=>c.id===id)!, d)} onRemove={handleRemoveCart} onCheckout={handleCheckout} 
             />
         )}
         
@@ -1155,7 +1187,7 @@ const App: React.FC = () => {
 
       {/* Bottom Navigation */}
       {isTabBarActuallyVisible && (
-        <nav className="bg-white border-t border-gray-100 flex justify-around items-center px-2 py-2 pb-6 absolute bottom-0 w-full z-50">
+        <nav className="bg-white border-t border-gray-100 flex justify-around items-center px-2 py-2 pb-6 absolute bottom-0 w-full z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
           {navItems.map((item) => {
              const isActive = currentScreen === item.id;
              return (
@@ -1166,7 +1198,7 @@ const App: React.FC = () => {
               >
                 <item.icon className={`w-6 h-6 mb-1 transition-transform ${isActive ? 'scale-110' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
                 <span className={`text-[10px] font-medium ${isActive ? 'opacity-100' : 'opacity-70'}`}>{item.label}</span>
-                {item.badge ? <span className="absolute top-1 right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm">{item.badge}</span> : null}
+                {item.badge ? <span className="absolute top-1 right-3 bg-primary text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm ring-2 ring-white">{item.badge}</span> : null}
               </button>
              );
           })}
