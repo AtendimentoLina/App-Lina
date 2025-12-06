@@ -37,15 +37,18 @@ import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
 // --- Configuration ---
 
 const getApiBaseUrl = () => {
-  // Em produção (Vercel), usa o caminho relativo /api
-  return '/api';
+  // ATENÇÃO: Para o App Mobile funcionar, isso PRECISA ser a URL completa da Vercel.
+  // Se estiver rodando local (localhost), ele usa a URL de produção para evitar erros de CORS/404 locais se o backend não estiver rodando.
+  const prodUrl = 'https://app-lina.vercel.app/api';
+  
+  // Se estivermos no navegador na própria Vercel, podemos usar relativo, mas absoluto é mais seguro para o App Nativo.
+  return prodUrl;
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
 // --- IMPORTANTE ---
 // FALSE = Tenta conectar com a Loja Integrada via Vercel.
-// Mude para TRUE apenas se estiver desenvolvendo localmente sem backend.
 const USE_MOCK_DATA = false; 
 
 // --- Shared Components ---
@@ -99,7 +102,7 @@ const Logo: React.FC<{ className?: string }> = ({ className = "" }) => {
 
   return (
     <img 
-      src="api/logo.png" 
+      src="/logo.png" 
       alt="LINA" 
       className={`${className} object-contain`} 
       onError={() => setError(true)} 
