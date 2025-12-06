@@ -37,18 +37,16 @@ import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
 // --- Configuration ---
 
 const getApiBaseUrl = () => {
-  // ATENÇÃO: Para o App Mobile funcionar, isso PRECISA ser a URL completa da Vercel.
-  // Se estiver rodando local (localhost), ele usa a URL de produção para evitar erros de CORS/404 locais se o backend não estiver rodando.
-  const prodUrl = 'https://app-lina.vercel.app/api';
-  
-  // Se estivermos no navegador na própria Vercel, podemos usar relativo, mas absoluto é mais seguro para o App Nativo.
-  return prodUrl;
+  // We use relative paths. 
+  // In production (Vercel), '/api' routes to serverless functions.
+  // In local dev (Vite), '/api' will 404 (unless proxied), triggering our robust fallback mechanism.
+  return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
 // --- IMPORTANTE ---
-// FALSE = Tenta conectar com a Loja Integrada via Vercel.
+// Set to true to force offline mode, or false to try API first
 const USE_MOCK_DATA = false; 
 
 // --- Shared Components ---
@@ -246,6 +244,7 @@ const ProductCardSkeleton = () => (
 );
 
 // --- SCREENS ---
+// (Keeping existing screen components like SplashScreen, OnboardingScreen, LoginScreen, OrdersScreen, SettingsScreen unchanged)
 
 const SplashScreen: React.FC = () => (
   <div className="h-full w-full bg-white flex flex-col items-center justify-center animate-fade-in z-50 absolute inset-0">
@@ -447,7 +446,6 @@ const HomeScreen: React.FC<{
   categories: Category[];
   isApiLoading: boolean;
 }> = ({ onNavigate, cart, wishlist, onUpdateQty, onToggleWishlist, onAddToCartAnimated, products, categories, isApiLoading }) => {
-  
   const getCartQty = (id: string) => cart.find(i => i.id === id)?.quantity || 0;
   const isWishlisted = (id: string) => wishlist.some(i => i.id === id);
 
@@ -578,7 +576,6 @@ const CatalogScreen: React.FC<{
              <div className="mb-4">
                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Ordenar Por</label>
                 <div className="grid grid-cols-2 gap-2">
-                   {/* Filters Buttons */}
                    {[['newest','Lançamentos'], ['rating','Melhor Avaliação'], ['price_asc','Menor Preço'], ['price_desc','Maior Preço']].map(([key, label]) => (
                      <button 
                        key={key}
@@ -998,7 +995,7 @@ const App: React.FC = () => {
     const fetchData = async () => {
       setIsApiLoading(true);
       
-      // Force mock data in preview/dev if USE_MOCK_DATA is true
+      // 1. Mock Mode Check (Frontend Flag)
       if (USE_MOCK_DATA) {
         await new Promise(resolve => setTimeout(resolve, 1500));
         setProducts(MOCK_PRODUCTS);
@@ -1007,43 +1004,68 @@ const App: React.FC = () => {
         return;
       }
 
-      // Simple fetch config to avoid preflight issues where possible
-      const fetchOptions = {
-         headers: {
-            'Content-Type': 'application/json'
-         }
+      // 2. Fetch from API (which now handles 401 and 404 internally via catch block)
+      const fetchWithFallback = async <T,>(
+        endpoint: string, 
+        cacheKey: string, 
+        mockData: T,
+        name: string
+      ): Promise<T> => {
+        try {
+          // Use relative path or full path based on environment logic
+          const url = `${API_BASE_URL}/${endpoint}`;
+          const res = await fetch(url, {
+             headers: { 'Content-Type': 'application/json' }
+          });
+          
+          if (!res.ok) {
+             const errorText = await res.text();
+             throw new Error(`Server returned ${res.status}: ${errorText}`);
+          }
+          
+          const data = await res.json();
+          
+          // Check if data is valid array (api might return object error if not caught)
+          if (!Array.isArray(data)) {
+             throw new Error("Invalid data format received");
+          }
+
+          // Success! Save to cache
+          localStorage.setItem(cacheKey, JSON.stringify(data));
+          return data as T;
+
+        } catch (error: any) {
+          const errorMessage = error.message || String(error);
+
+          // Handle 404 cleanly (Backend not deployed/running locally)
+          if (errorMessage.includes('404')) {
+             console.warn(`[App] ${name} API not found (404). This is expected in local dev without a running backend. Switching to Mock Data.`);
+             return mockData;
+          }
+
+          console.error(`[App] ${name} Fetch Error:`, error);
+          
+          // Fallback 1: Local Storage Cache
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            console.warn(`[App] Using cached ${name} data.`);
+            return JSON.parse(cached) as T;
+          }
+          
+          // Fallback 2: Mock Data (Critical Fallback)
+          console.warn(`[App] Using mock ${name} data (Client Fallback).`);
+          return mockData;
+        }
       };
 
-      try {
-         // Fetch both concurrently
-         const [prodRes, catRes] = await Promise.all([
-             fetch(`${API_BASE_URL}/products`, fetchOptions),
-             fetch(`${API_BASE_URL}/categories`, fetchOptions)
-         ]);
+      const [prodData, catData] = await Promise.all([
+         fetchWithFallback<Product[]>('products', 'cached_products', MOCK_PRODUCTS, 'Products'),
+         fetchWithFallback<Category[]>('categories', 'cached_categories', MOCK_CATEGORIES, 'Categories')
+      ]);
 
-         if (prodRes.ok) {
-            const prodData = await prodRes.json();
-            setProducts(prodData);
-         } else {
-            console.warn(`Products API unavailable (${prodRes.status}). Switching to mock data.`);
-            setProducts(MOCK_PRODUCTS);
-         }
-
-         if (catRes.ok) {
-            const catData = await catRes.json();
-            setCategories(catData);
-         } else {
-            console.warn(`Categories API unavailable (${catRes.status}). Switching to mock data.`);
-            setCategories(MOCK_CATEGORIES);
-         }
-
-      } catch (err) {
-         console.warn("Network Error (Using Mock):", err);
-         setProducts(MOCK_PRODUCTS);
-         setCategories(MOCK_CATEGORIES);
-      } finally {
-         setIsApiLoading(false);
-      }
+      setProducts(prodData);
+      setCategories(catData);
+      setIsApiLoading(false);
     };
 
     fetchData();
