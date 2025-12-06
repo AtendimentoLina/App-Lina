@@ -37,16 +37,17 @@ import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
 // --- Configuration ---
 
 const getApiBaseUrl = () => {
-  // We use relative paths. 
-  // In production (Vercel), '/api' routes to serverless functions.
-  // In local dev (Vite), '/api' will 404 (unless proxied), triggering our robust fallback mechanism.
+  // If running on localhost, point to the production Vercel API to test real integration.
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+     return 'https://app-lina.vercel.app/api'; 
+  }
+  // In production (Vercel), use relative path to ensure cookies/auth/routing works natively.
   return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
 // --- IMPORTANTE ---
-// Set to true to force offline mode, or false to try API first
 const USE_MOCK_DATA = false; 
 
 // --- Shared Components ---
@@ -1022,6 +1023,12 @@ const App: React.FC = () => {
              const errorText = await res.text();
              throw new Error(`Server returned ${res.status}: ${errorText}`);
           }
+
+          // Check for HTML response (SPA fallback disguised as 200 OK)
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('text/html')) {
+             throw new Error('API endpoint returned HTML (likely 404 SPA fallback)');
+          }
           
           const data = await res.json();
           
@@ -1037,9 +1044,10 @@ const App: React.FC = () => {
         } catch (error: any) {
           const errorMessage = error.message || String(error);
 
-          // Handle 404 cleanly (Backend not deployed/running locally)
-          if (errorMessage.includes('404')) {
-             console.warn(`[App] ${name} API not found (404). This is expected in local dev without a running backend. Switching to Mock Data.`);
+          // Handle 404 or HTML response cleanly (Backend not deployed/running locally)
+          // We suppress the error log to avoid user confusion in local dev environments
+          if (errorMessage.includes('404') || errorMessage.includes('HTML') || error.name === 'SyntaxError') {
+             console.log(`[App] ${name} API unreachable. Switching to Mock Data.`);
              return mockData;
           }
 

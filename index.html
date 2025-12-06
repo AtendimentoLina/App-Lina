@@ -9,6 +9,14 @@
     <title>Lina Materiais Elétricos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+      // Suppress Tailwind CDN warning
+      console.warn = (function(oldWarn) {
+        return function(message) {
+          if (typeof message === 'string' && message.includes('cdn.tailwindcss.com')) return;
+          oldWarn.apply(console, arguments);
+        };
+      })(console.warn);
+
       tailwind.config = {
         theme: {
           extend: {
