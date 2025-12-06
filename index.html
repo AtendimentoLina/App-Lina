@@ -7,16 +7,23 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Lina Materiais Elétricos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 1. Suppress Tailwind CDN Warning (Must be before the script loads) -->
     <script>
-      // Suppress Tailwind CDN warning
-      console.warn = (function(oldWarn) {
-        return function(message) {
+      (function() {
+        var originalWarn = console.warn;
+        console.warn = function(message) {
           if (typeof message === 'string' && message.includes('cdn.tailwindcss.com')) return;
-          oldWarn.apply(console, arguments);
+          originalWarn.apply(console, arguments);
         };
-      })(console.warn);
+      })();
+    </script>
 
+    <!-- 2. Load Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 3. Configure Tailwind -->
+    <script>
       tailwind.config = {
         theme: {
           extend: {
@@ -33,6 +40,7 @@
         }
       }
     </script>
+
     <style>
       /* Hide scrollbar for Chrome, Safari and Opera */
       .no-scrollbar::-webkit-scrollbar {

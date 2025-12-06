@@ -29,7 +29,9 @@ import {
   Info,
   ExternalLink,
   CheckCircle,
-  Database
+  Database,
+  AlertTriangle,
+  WifiOff
 } from 'lucide-react';
 import { PRODUCTS as MOCK_PRODUCTS, CATEGORIES as MOCK_CATEGORIES, BANNERS, MOCK_ORDERS } from './constants';
 import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
@@ -37,11 +39,21 @@ import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
 // --- Configuration ---
 
 const getApiBaseUrl = () => {
-  // If running on localhost, point to the production Vercel API to test real integration.
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-     return 'https://app-lina.vercel.app/api'; 
+  // Check for Native App environment (Capacitor)
+  const isNative = window.location.protocol === 'file:' || (window as any).Capacitor?.isNative;
+  
+  if (isNative) {
+    // Native apps cannot use relative paths or local proxies, must point to production
+    return 'https://app-lina.vercel.app/api';
   }
-  // In production (Vercel), use relative path to ensure cookies/auth/routing works natively.
+
+  // Localhost development
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+     // Use the proxy configured in vite.config.ts
+     return '/api'; 
+  }
+  
+  // Production web (same domain)
   return '/api';
 };
 
@@ -108,6 +120,14 @@ const Logo: React.FC<{ className?: string }> = ({ className = "" }) => {
     />
   );
 };
+
+const ErrorBanner: React.FC<{ message: string; onDismiss: () => void; type?: 'error' | 'warning' }> = ({ message, onDismiss, type = 'error' }) => (
+  <div className={`fixed top-4 left-4 right-4 z-[60] p-4 rounded-xl shadow-lg animate-slide-in flex items-start gap-3 ${type === 'error' ? 'bg-red-50 border border-red-100 text-red-800' : 'bg-yellow-50 border border-yellow-100 text-yellow-800'}`}>
+     {type === 'error' ? <AlertTriangle className="w-5 h-5 shrink-0" /> : <WifiOff className="w-5 h-5 shrink-0" />}
+     <div className="flex-1 text-sm font-medium">{message}</div>
+     <button onClick={onDismiss} className="p-1 hover:bg-black/5 rounded-full"><X className="w-4 h-4" /></button>
+  </div>
+);
 
 const FlyingIcon: React.FC<{ start: {x: number, y: number}, onEnd: () => void }> = ({ start, onEnd }) => {
   const [style, setStyle] = useState<React.CSSProperties>({
@@ -978,6 +998,9 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isApiLoading, setIsApiLoading] = useState(true);
 
+  // Global Error State
+  const [errorState, setErrorState] = useState<{message: string, type: 'error' | 'warning'} | null>(null);
+
   const [cart, setCart] = useState<CartItem[]>(() => {
     try { const saved = localStorage.getItem('cart'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; }
   });
@@ -1005,23 +1028,57 @@ const App: React.FC = () => {
         return;
       }
 
-      // 2. Fetch from API (which now handles 401 and 404 internally via catch block)
+      // 2. Robust Fetch with Fallback
       const fetchWithFallback = async <T,>(
         endpoint: string, 
         cacheKey: string, 
         mockData: T,
-        name: string
+        contextName: string
       ): Promise<T> => {
         try {
-          // Use relative path or full path based on environment logic
+          // Use constructed base URL. 
+          // Note: In Vercel serverless functions, 'api/products' calls 'api/products.js'
           const url = `${API_BASE_URL}/${endpoint}`;
+          console.log(`[API] Fetching ${contextName} from ${url}...`);
+          
           const res = await fetch(url, {
-             headers: { 'Content-Type': 'application/json' }
+             headers: { 
+               'Content-Type': 'application/json',
+               'Accept': 'application/json'
+             }
           });
           
           if (!res.ok) {
-             const errorText = await res.text();
-             throw new Error(`Server returned ${res.status}: ${errorText}`);
+             const statusText = res.statusText;
+             const status = res.status;
+             
+             // Check if 404 - Graceful Fallback for undeployed backend
+             if (status === 404) {
+                const msg = `Endpoint '${url}' não encontrado (404). Backend Vercel pode não estar rodando ou implantado.`;
+                console.warn(`[API] ${msg}`);
+                setErrorState({ message: msg + " Usando dados de demonstração.", type: 'warning' });
+                return mockData;
+             }
+
+             // Handle 401 Unauthorized specifically (Configuration Error)
+             if (status === 401) {
+                const msg = "Acesso Não Autorizado: Verifique se a CHAVE DE API (LI_API_KEY) está correta na Vercel.";
+                console.error(`[API] 401 Unauthorized: ${msg}`);
+                // Critical error, but fail softly with data so app works
+                setErrorState({ message: msg, type: 'error' });
+                return mockData;
+             }
+
+             // Handle 500 (Backend Configuration Error like missing Env Var)
+             if (status === 500) {
+                 const msg = "Erro de Configuração no Servidor: Verifique as variáveis de ambiente na Vercel.";
+                 console.error(`[API] 500 Server Error: ${msg}`);
+                 setErrorState({ message: msg, type: 'error' });
+                 return mockData;
+             }
+
+             console.error(`[API] Error ${status} fetching ${contextName}: ${statusText}`);
+             throw new Error(`HTTP Error ${status}`);
           }
 
           // Check for HTML response (SPA fallback disguised as 200 OK)
@@ -1032,36 +1089,41 @@ const App: React.FC = () => {
           
           const data = await res.json();
           
-          // Check if data is valid array (api might return object error if not caught)
+          // Check for explicit error object from backend (even if 200 OK, though typically handled by status codes above)
+          if (data.error) {
+              throw new Error(data.message || data.error);
+          }
+
+          // Check if data is valid array
           if (!Array.isArray(data)) {
-             throw new Error("Invalid data format received");
+             throw new Error("Invalid data format received (Expected Array)");
           }
 
           // Success! Save to cache
+          console.log(`[API] ${contextName} fetched and cached successfully.`);
           localStorage.setItem(cacheKey, JSON.stringify(data));
           return data as T;
 
         } catch (error: any) {
           const errorMessage = error.message || String(error);
-
-          // Handle 404 or HTML response cleanly (Backend not deployed/running locally)
-          // We suppress the error log to avoid user confusion in local dev environments
-          if (errorMessage.includes('404') || errorMessage.includes('HTML') || error.name === 'SyntaxError') {
-             console.log(`[App] ${name} API unreachable. Switching to Mock Data.`);
-             return mockData;
-          }
-
-          console.error(`[App] ${name} Fetch Error:`, error);
+          console.warn(`[API] Failed to fetch ${contextName}. Reason: ${errorMessage}`);
           
           // Fallback 1: Local Storage Cache
           const cached = localStorage.getItem(cacheKey);
           if (cached) {
-            console.warn(`[App] Using cached ${name} data.`);
+            console.log(`[API] Recovered ${contextName} from local cache.`);
+            // Only show offline warning if we haven't shown a more specific error already
+            if (!errorState) {
+                setErrorState({ message: "Modo Offline: Usando dados em cache.", type: 'warning' });
+            }
             return JSON.parse(cached) as T;
           }
           
           // Fallback 2: Mock Data (Critical Fallback)
-          console.warn(`[App] Using mock ${name} data (Client Fallback).`);
+          console.warn(`[API] Cache empty. Using Mock Data for ${contextName} to keep app functional.`);
+          if (!errorState) {
+             setErrorState({ message: "Falha na conexão. Usando dados de demonstração.", type: 'warning' });
+          }
           return mockData;
         }
       };
@@ -1108,7 +1170,10 @@ const App: React.FC = () => {
       if (!existing && delta > 0) return [...prev, { ...product, quantity: delta }];
       if (existing) {
         const newQty = existing.quantity + delta;
-        if (newQty <= 0) return prev.filter(item => item.id !== product.id);
+        // If delta is negative and qty becomes 0, remove item?
+        // Prompt says "Instead of decrementing quantity to zero... add a visible Remove icon".
+        // So we will stop at 1.
+        if (newQty <= 0) return prev; // Do not remove via minus button, use trash icon.
         return prev.map(item => item.id === product.id ? { ...item, quantity: newQty } : item);
       }
       return prev;
@@ -1185,6 +1250,15 @@ const App: React.FC = () => {
     <div className="w-full h-screen bg-black flex justify-center items-center">
     <div className="w-full h-full max-w-md bg-white shadow-2xl overflow-hidden relative font-sans text-gray-900 flex flex-col md:rounded-3xl md:h-[95vh] md:border-4 md:border-gray-800">
       
+      {/* Error Banner Overlay */}
+      {errorState && (
+          <ErrorBanner 
+            message={errorState.message} 
+            type={errorState.type} 
+            onDismiss={() => setErrorState(null)} 
+          />
+      )}
+
       {/* Content Area */}
       <main className="flex-1 overflow-hidden relative bg-white">
         {flyingIcons.map(icon => (

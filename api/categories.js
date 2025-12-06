@@ -17,7 +17,15 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const API_KEY = process.env.LI_API_KEY || '102b144575bdeacd312d'; 
+  const API_KEY = process.env.LI_API_KEY;
+
+  if (!API_KEY) {
+     console.error("[API Error] Missing LI_API_KEY environment variable");
+     return res.status(500).json({ 
+       error: 'CONFIGURATION_ERROR', 
+       message: 'A chave de API (LI_API_KEY) não está configurada na Vercel.' 
+     });
+  }
 
   try {
     const response = await axios.get('https://api.awsli.com.br/v1/categoria', {
@@ -39,12 +47,23 @@ export default async function handler(req, res) {
     return res.status(200).json(categories);
 
   } catch (error) {
-    console.warn(`[API] Serving Mock Categories due to error: ${error.message}`);
+    console.error(`[API Error] Failed to fetch categories from Loja Integrada.`);
     
-    if (error.response) {
-       console.warn(`[API] Upstream Status: ${error.response.status}`);
+    if (error.response && error.response.status === 401) {
+       console.error(`[API Error] 401 Unauthorized - Check API Key validity.`);
+       return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'A chave de API configurada é inválida ou expirou.'
+       });
     }
 
+    if (error.response) {
+       console.error(`[API Error] Status: ${error.response.status}`);
+    } else {
+       console.error(`[API Error] ${error.message}`);
+    }
+
+    res.setHeader('X-Fallback-Mode', 'true');
     res.setHeader('Cache-Control', 'no-cache');
     return res.status(200).json(MOCK_CATEGORIES);
   }

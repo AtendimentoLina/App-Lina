@@ -69,7 +69,17 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const API_KEY = process.env.LI_API_KEY || '102b144575bdeacd312d'; 
+  // Ensure LI_API_KEY is set in Vercel Environment Variables
+  const API_KEY = process.env.LI_API_KEY;
+
+  if (!API_KEY) {
+     console.error("[API Error] Missing LI_API_KEY environment variable");
+     // Respond with 500 to let frontend know configuration is missing
+     return res.status(500).json({ 
+       error: 'CONFIGURATION_ERROR', 
+       message: 'A chave de API (LI_API_KEY) não está configurada na Vercel.' 
+     });
+  }
 
   try {
     const response = await axios.get('https://api.awsli.com.br/v1/produto', {
@@ -96,15 +106,27 @@ export default async function handler(req, res) {
     return res.status(200).json(products);
 
   } catch (error) {
-    // Graceful Fallback:
-    // If the API Key is invalid (401), or API is down (5xx), or timeout
-    // We serve the Mock Data so the app remains functional for the user.
-    console.warn(`[API] Serving Mock Data due to error: ${error.message}`);
+    console.error(`[API Error] Failed to fetch products from Loja Integrada.`);
     
-    if (error.response) {
-       console.warn(`[API] Upstream Status: ${error.response.status}`);
+    // Check specifically for Auth errors from Loja Integrada
+    if (error.response && error.response.status === 401) {
+       console.error(`[API Error] 401 Unauthorized - Check API Key validity.`);
+       return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'A chave de API configurada é inválida ou expirou.'
+       });
     }
 
+    // For other errors (Timeout, 500 from LI, Network), fallback to Mock Data
+    // allowing the app to function in "Offline/Demo" mode.
+    if (error.response) {
+       console.error(`[API Error] Status: ${error.response.status}`);
+    } else {
+       console.error(`[API Error] ${error.message}`);
+    }
+
+    // Return Mock Data with a specific header indicating fallback
+    res.setHeader('X-Fallback-Mode', 'true');
     res.setHeader('Cache-Control', 'no-cache');
     return res.status(200).json(MOCK_PRODUCTS);
   }
