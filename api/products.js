@@ -1,12 +1,11 @@
 // Arquivo: api/products.js
 export default async function handler(req, res) {
-  // Configuração CORS robusta
+  // CORS Configuration
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight 24h
+  res.setHeader('Access-Control-Max-Age', '86400');
 
-  // Responder imediatamente a solicitações OPTIONS (Preflight)
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -18,7 +17,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Tenta usar fetch nativo (Node 18+)
     const response = await fetch('https://api.awsli.com.br/v1/produto?limit=20&format=json', {
       method: 'GET',
       headers: { 
@@ -30,8 +28,7 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('LI API Error:', response.status, errorText);
-      throw new Error(`LI API Error: ${response.status}`);
+      throw new Error(`LI API Error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
@@ -50,7 +47,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
     res.status(200).json(products);
   } catch (error) {
-    console.error('Handler Error:', error);
+    console.error('API Handler Error:', error);
     res.status(500).json({ 
       error: 'Erro interno ao buscar produtos', 
       details: error.message 

@@ -27,8 +27,7 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('LI API Error:', response.status, errorText);
-      throw new Error(`LI API Error: ${response.status}`);
+      throw new Error(`LI API Error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
@@ -42,7 +41,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
     res.status(200).json(categories);
   } catch (error) {
-    console.error('Handler Error:', error);
+    console.error('API Handler Error:', error);
     res.status(500).json({ 
       error: 'Erro interno ao buscar categorias', 
       details: error.message 

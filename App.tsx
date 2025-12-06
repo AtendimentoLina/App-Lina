@@ -28,7 +28,8 @@ import {
   SlidersHorizontal,
   Info,
   ExternalLink,
-  CheckCircle
+  CheckCircle,
+  Database
 } from 'lucide-react';
 import { PRODUCTS as MOCK_PRODUCTS, CATEGORIES as MOCK_CATEGORIES, BANNERS, MOCK_ORDERS } from './constants';
 import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
@@ -36,17 +37,15 @@ import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
 // --- Configuration ---
 
 const getApiBaseUrl = () => {
-  // If running locally, point to production Vercel
-  // You must ensure that your Vercel project is deployed and the Function URL is correct.
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'https://app-lina.vercel.app/api';
-  }
-  // If running on Vercel, use relative path
   return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
-const USE_MOCK_DATA = false; 
+
+// --- IMPORTANTE ---
+// Mude para FALSE apenas quando publicar na Vercel com a chave de API configurada.
+// Enquanto estiver testando localmente ou no preview, mantenha TRUE.
+const USE_MOCK_DATA = true; 
 
 // --- Shared Components ---
 
@@ -904,6 +903,15 @@ const ProfileScreen: React.FC<{
               </div>
             )}
 
+            {/* Indicator of Data Source */}
+            <div className="mb-8 p-3 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-between text-blue-700 text-xs font-medium">
+               <div className="flex items-center gap-2">
+                 <Database className="w-4 h-4" />
+                 <span>Fonte de Dados: {USE_MOCK_DATA ? 'Demonstração (Mock)' : 'Loja Integrada (Live)'}</span>
+               </div>
+               {!USE_MOCK_DATA && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
+            </div>
+
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8 shadow-sm">
                 <button onClick={() => onGoTo(AppScreen.ORDERS)} className="w-full flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-3"><Package className="w-5 h-5 text-primary" /><span className="font-medium text-gray-700">Meus Pedidos</span></div>
@@ -985,8 +993,9 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       setIsApiLoading(true);
+      
+      // Force mock data in preview/dev if USE_MOCK_DATA is true
       if (USE_MOCK_DATA) {
-        // Simulate network delay for better UX
         await new Promise(resolve => setTimeout(resolve, 1500));
         setProducts(MOCK_PRODUCTS);
         setCategories(MOCK_CATEGORIES);
@@ -1012,7 +1021,7 @@ const App: React.FC = () => {
             const prodData = await prodRes.json();
             setProducts(prodData);
          } else {
-            console.warn("Products API Error:", prodRes.status, prodRes.statusText);
+            console.warn(`Products API unavailable (${prodRes.status}). Switching to mock data.`);
             setProducts(MOCK_PRODUCTS);
          }
 
@@ -1020,7 +1029,7 @@ const App: React.FC = () => {
             const catData = await catRes.json();
             setCategories(catData);
          } else {
-            console.warn("Categories API Error:", catRes.status, catRes.statusText);
+            console.warn(`Categories API unavailable (${catRes.status}). Switching to mock data.`);
             setCategories(MOCK_CATEGORIES);
          }
 
