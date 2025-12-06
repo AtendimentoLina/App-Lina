@@ -1,9 +1,18 @@
 // Arquivo: api/categories.js
 export default async function handler(req, res) {
-  const API_KEY = process.env.LI_API_KEY; 
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.setHeader('Access-Control-Max-Age', '86400');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const API_KEY = process.env.LI_API_KEY || '102b144575bdeacd312d'; 
   
   if (!API_KEY) {
-    return res.status(500).json({ error: 'Chave de API (LI_API_KEY) não configurada na Vercel.' });
+    return res.status(500).json({ error: 'Configuração de API ausente.' });
   }
 
   try {
@@ -11,12 +20,15 @@ export default async function handler(req, res) {
       method: 'GET',
       headers: { 
         'Authorization': `chave_api ${API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Erro na API Loja Integrada: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('LI API Error:', response.status, errorText);
+      throw new Error(`LI API Error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -24,18 +36,15 @@ export default async function handler(req, res) {
     const categories = data.objects.map(item => ({
       id: item.id.toString(),
       name: item.nome,
-      image: `https://picsum.photos/seed/${item.id}/100/100` // Placeholder visual
+      image: `https://picsum.photos/seed/${item.id}/100/100` 
     }));
 
-    // Configura Cache e CORS (Necessário para testar localmente conectando na Vercel)
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
     res.status(200).json(categories);
   } catch (error) {
-    console.error(error);
+    console.error('Handler Error:', error);
     res.status(500).json({ 
-      error: 'Erro ao buscar categorias.', 
+      error: 'Erro interno ao buscar categorias', 
       details: error.message 
     });
   }

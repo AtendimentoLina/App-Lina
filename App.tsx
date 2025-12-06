@@ -34,8 +34,19 @@ import { PRODUCTS as MOCK_PRODUCTS, CATEGORIES as MOCK_CATEGORIES, BANNERS, MOCK
 import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
 
 // --- Configuration ---
-const API_BASE_URL = 'https://app-lina.vercel.app/api'; 
-const USE_MOCK_DATA = false; // Set to FALSE to use real integration
+
+const getApiBaseUrl = () => {
+  // If running locally, point to production Vercel
+  // You must ensure that your Vercel project is deployed and the Function URL is correct.
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'https://app-lina.vercel.app/api';
+  }
+  // If running on Vercel, use relative path
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+const USE_MOCK_DATA = false; 
 
 // --- Shared Components ---
 
@@ -72,6 +83,29 @@ const Button: React.FC<{
 const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) => (
   <div className={`animate-pulse bg-gray-100 rounded-xl ${className}`} />
 );
+
+// --- Robust Logo Component ---
+const Logo: React.FC<{ className?: string }> = ({ className = "" }) => {
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div className={`flex items-center justify-center select-none ${className}`} style={{ minHeight: '40px' }}>
+        <span className="text-4xl font-black tracking-tighter text-gray-900 leading-none">LINA</span>
+        <div className="w-2 h-2 bg-primary rounded-full ml-1 mt-3"></div>
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src="api/logo.png" 
+      alt="LINA" 
+      className={`${className} object-contain`} 
+      onError={() => setError(true)} 
+    />
+  );
+};
 
 const FlyingIcon: React.FC<{ start: {x: number, y: number}, onEnd: () => void }> = ({ start, onEnd }) => {
   const [style, setStyle] = useState<React.CSSProperties>({
@@ -213,8 +247,7 @@ const ProductCardSkeleton = () => (
 const SplashScreen: React.FC = () => (
   <div className="h-full w-full bg-white flex flex-col items-center justify-center animate-fade-in z-50 absolute inset-0">
      <div className="mb-10 p-4">
-        {/* Usando logo.png com fundo branco conforme solicitado */}
-        <img src="logo.png" alt="LINA" className="w-56 object-contain" />
+        <Logo className="w-56 h-auto" />
      </div>
      <div className="animate-spin w-8 h-8 border-2 border-gray-100 border-t-[#d6001c] rounded-full"></div>
      <div className="absolute bottom-10 text-gray-400 text-xs font-medium">Carregando Loja...</div>
@@ -260,7 +293,9 @@ const LoginScreen: React.FC<{ onLogin: () => void, onRegister: () => void, onSki
   return (
     <div className="h-full flex flex-col p-8 bg-white justify-center animate-fade-in">
        <div className="mb-8 text-center">
-          <img src="logo.png" alt="LINA" className="h-12 mx-auto mb-6" />
+          <div className="flex justify-center mb-6">
+             <Logo className="h-12 w-auto" />
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Bem-vindo(a)!</h1>
           <p className="text-gray-500">Acesse sua conta para ver pedidos e ofertas exclusivas.</p>
        </div>
@@ -950,44 +985,51 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       setIsApiLoading(true);
-      try {
-        if (USE_MOCK_DATA) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          setProducts(MOCK_PRODUCTS);
-          setCategories(MOCK_CATEGORIES);
-        } else {
-          try {
-            const prodResponse = await fetch(`${API_BASE_URL}/products`);
-            if (!prodResponse.ok) throw new Error(`Products API error! status: ${prodResponse.status}`);
-            
-            const prodContentType = prodResponse.headers.get("content-type");
-            if (!prodContentType || !prodContentType.includes("application/json")) {
-               throw new Error("Received non-JSON response from Products API");
-            }
-            const prodData = await prodResponse.json();
-            setProducts(prodData);
-            
-            const catResponse = await fetch(`${API_BASE_URL}/categories`);
-            if (!catResponse.ok) throw new Error(`Categories API error! status: ${catResponse.status}`);
-            
-            const catContentType = catResponse.headers.get("content-type");
-            if (!catContentType || !catContentType.includes("application/json")) {
-               throw new Error("Received non-JSON response from Categories API");
-            }
-            const catData = await catResponse.json();
-            setCategories(catData); 
-
-          } catch (innerError) {
-             console.warn("API Error, falling back to mock", innerError);
-             setProducts(MOCK_PRODUCTS);
-             setCategories(MOCK_CATEGORIES);
-          }
-        }
-      } catch (error) {
+      if (USE_MOCK_DATA) {
+        // Simulate network delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 1500));
         setProducts(MOCK_PRODUCTS);
         setCategories(MOCK_CATEGORIES);
-      } finally {
         setIsApiLoading(false);
+        return;
+      }
+
+      // Simple fetch config to avoid preflight issues where possible
+      const fetchOptions = {
+         headers: {
+            'Content-Type': 'application/json'
+         }
+      };
+
+      try {
+         // Fetch both concurrently
+         const [prodRes, catRes] = await Promise.all([
+             fetch(`${API_BASE_URL}/products`, fetchOptions),
+             fetch(`${API_BASE_URL}/categories`, fetchOptions)
+         ]);
+
+         if (prodRes.ok) {
+            const prodData = await prodRes.json();
+            setProducts(prodData);
+         } else {
+            console.warn("Products API Error:", prodRes.status, prodRes.statusText);
+            setProducts(MOCK_PRODUCTS);
+         }
+
+         if (catRes.ok) {
+            const catData = await catRes.json();
+            setCategories(catData);
+         } else {
+            console.warn("Categories API Error:", catRes.status, catRes.statusText);
+            setCategories(MOCK_CATEGORIES);
+         }
+
+      } catch (err) {
+         console.warn("Network Error (Using Mock):", err);
+         setProducts(MOCK_PRODUCTS);
+         setCategories(MOCK_CATEGORIES);
+      } finally {
+         setIsApiLoading(false);
       }
     };
 
@@ -1051,24 +1093,14 @@ const App: React.FC = () => {
 
   // Integration with Loja Integrada Checkout via WebView/External Link
   const handleCheckout = () => {
-     // Construct Cart URL for Loja Integrada
-     // Example: https://www.lina.com.br/carrinho/produto/ID/qtde/QTY
-     // Since bulk add isn't standard in URL, we redirect to cart or first item.
-     // In a real PWA/WebView, we'd inject JS or use the official API to create a cart session.
-     
      if(cart.length === 0) return;
-     
-     // Simulation of opening the secure checkout
      const checkoutUrl = `https://www.lina.com.br/carrinho/produto/${cart[0].id}/qtde/${cart[0].quantity}`;
-     
      if (confirm("Você será redirecionado para o ambiente seguro da Loja Integrada para finalizar o pagamento.")) {
-        // In a real Native App (Capacitor), use Browser.open({ url: checkoutUrl });
         window.open(checkoutUrl, '_blank');
      }
   }
 
   const handleBuyNow = (product: Product) => {
-     // Direct to checkout with single item
      const checkoutUrl = `https://www.lina.com.br/carrinho/produto/${product.id}/qtde/1`;
      window.open(checkoutUrl, '_blank');
   }
