@@ -37,15 +37,16 @@ import { AppScreen, Product, CartItem, Order, Review, Category } from './types';
 // --- Configuration ---
 
 const getApiBaseUrl = () => {
+  // Em produção (Vercel), usa o caminho relativo /api
   return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
 // --- IMPORTANTE ---
-// Mude para FALSE apenas quando publicar na Vercel com a chave de API configurada.
-// Enquanto estiver testando localmente ou no preview, mantenha TRUE.
-const USE_MOCK_DATA = true; 
+// FALSE = Tenta conectar com a Loja Integrada via Vercel.
+// Mude para TRUE apenas se estiver desenvolvendo localmente sem backend.
+const USE_MOCK_DATA = false; 
 
 // --- Shared Components ---
 
